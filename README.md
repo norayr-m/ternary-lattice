@@ -69,7 +69,7 @@ Each node is an observer with a local projection. The ternary state is the compr
 
 ---
 
-All visualizations and demonstrations were co-authored with Claude (Anthropic).
+All visualizations and demonstrations were co-authored with Claude (Anthropic) and Gemini (Google).
 
 ## Authors
 
