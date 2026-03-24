@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 11: Ternary Simplex Lattice (Trisistor Architecture)</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #05050a; color: #a0a0c0;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+        canvas {
+            display: block; width: 100%; height: 100%;
+        }
+        #ui {
+            position: absolute; top: 20px; left: 20px;
+            pointer-events: none; z-index: 10;
+            background: rgba(10, 10, 15, 0.85);
+            padding: 20px; border: 1px solid #334;
+            border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        h1 { margin: 0 0 10px 0; font-size: 16px; color: #fff; text-transform: uppercase; letter-spacing: 2px;}
+        .stat { font-size: 12px; margin: 4px 0; }
+        .legend { margin-top: 15px; font-size: 11px; border-top: 1px solid #334; padding-top: 10px; }
+        .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h1>Phase 11: Trisistor Matrix</h1>
+        <div class="stat">Topology: <span style="color:#0a84ff">Tetrahedral (4-Simplex Lattice)</span></div>
+        <div class="stat">Hardware Base: <span style="color:#fff">Ternary (Base-3 Radix)</span></div>
+        <div class="stat">Memory Map: <span style="color:#34c759">Int8Array [-1, 0, 1]</span></div>
+        <div class="stat">Math Core: <span style="color:#ffcc00">sign(resonance - threshold)</span></div>
+        
+        <div class="legend">
+            <div><span class="dot" style="background:#ff3b30; box-shadow: 0 0 8px #ff3b30;"></span> State -1 (Inhibitory)</div>
+            <div><span class="dot" style="background:#334;"></span> State  0 (Null/Rest)</div>
+            <div><span class="dot" style="background:#0a84ff; box-shadow: 0 0 8px #0a84ff;"></span> State +1 (Excitatory)</div>
+        </div>
+    </div>
+
+    <canvas id="latticeCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('latticeCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        let W, H, cx, cy;
+
+        // Configuration
+        const MAX_DEPTH = 5;       // Recursive depth of the fractal tetrahedron
+        const RADIUS = 180;        // Spread radius
+
+        let nodes = [];
+        let edges = [];
+        let timeTick = 0;
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+            cx = W / 2; cy = H / 2;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 3D Math Helpers
+        function rotateY(p, theta) {
+            return {
+                x: p.x * Math.cos(theta) - p.z * Math.sin(theta),
+                y: p.y,
+                z: p.x * Math.sin(theta) + p.z * Math.cos(theta)
+            };
+        }
+        
+        function rotateX(p, theta) {
+            return {
+                x: p.x,
+                y: p.y * Math.cos(theta) - p.z * Math.sin(theta),
+                z: p.y * Math.sin(theta) + p.z * Math.cos(theta)
+            };
+        }
+
+        // Generate the 4 Tetrahedral Vectors (The 109.5 degree sp3 methane bonds)
+        // These EXACTLY map to the 4 indices of a GPU vec4!
+        const tetAngles = [
+            { x: 0, y: 1, z: 0 },
+            { x: Math.cos(Math.PI * 0.1) * 0.9428, y: -0.3333, z: Math.sin(Math.PI * 0.1) * 0.9428 },
+            { x: Math.cos(Math.PI * 0.766) * 0.9428, y: -0.3333, z: Math.sin(Math.PI * 0.766) * 0.9428 },
+            { x: Math.cos(Math.PI * 1.433) * 0.9428, y: -0.3333, z: Math.sin(Math.PI * 1.433) * 0.9428 }
+        ];
+
+        class Node {
+            constructor(id, x, y, z, depth) {
+                this.id = id;
+                this.base = { x, y, z };
+                this.proj = { x: 0, y: 0 };
+                this.depth = depth;
+                this.state = 0; // Ternary Int8Array State: -1, 0, or 1
+                this.resonance = 0; // Continuous Ether Wave crossing the node
+                this.threshold = 0.4; // Activation threshold
+                this.neighbors = []; // Maximum of 4 (vec4 geometry)
+            }
+        }
+
+        function generateLattice() {
+            nodes = []; edges = [];
+            let idCounter = 0;
+
+            // Recursive Fractal Tetrahedral Builder (Simplex Lattice)
+            function buildBranch(x, y, z, depth, incomingVectorIndex) {
+                const node = new Node(idCounter++, x, y, z, depth);
+                nodes.push(node);
+
+                if (depth < MAX_DEPTH) {
+                    const shrink = Math.pow(0.55, depth);
+                    for (let i = 0; i < 4; i++) {
+                        // Don't build exactly backwards over the incoming edge
+                        if (depth > 0 && i === incomingVectorIndex) continue;
+                        
+                        let vec = tetAngles[i];
+                        // Random geometric jitter to resemble an organic cell structure slightly
+                        let jx = vec.x * RADIUS * shrink;
+                        let jy = vec.y * RADIUS * shrink;
+                        let jz = vec.z * RADIUS * shrink;
+
+                        const child = buildBranch(x + jx, y + jy, z + jz, depth + 1, (i+2)%4);
+                        
+                        // Strict vec4 constraint: Maximum 4 edges per node.
+                        node.neighbors.push(child.id);
+                        child.neighbors.push(node.id);
+                        edges.push({ source: node, target: child });
+                    }
+                }
+                return node;
+            }
+
+            buildBranch(0, 0, 0, 0, -1);
+            console.log(`Lattice generated. Total Nodes: ${nodes.length}. Maximum edges perfectly bounded to vec4.`);
+        }
+
+        generateLattice();
+
+        function render() {
+            ctx.fillStyle = '#05050a';
+            ctx.fillRect(0, 0, W, H);
+
+            timeTick += 0.015;
+
+            // 1. Simulating the WebGL Hardware Math (The GPU Fragment Shader logic)
+            // A macroscopic "Ether" polyphonic wave sweeps through 3D space
+            for (let n of nodes) {
+                // Socratic wave passing through geographical geometry
+                n.resonance = Math.sin(n.base.x * 0.005 + timeTick * 2) * Math.cos(n.base.y * 0.005 + timeTick * 1.5) + Math.sin(n.base.z * 0.01 - timeTick);
+                
+                // --- THE TERNARY TRISISTOR CHEAT CODE ---
+                // We completely drop continuous floats. 
+                // We use sign() clamping to instantly map the math to Int8 [-1, 0, 1] biological states.
+                if (Math.abs(n.resonance) < n.threshold) {
+                    n.state = 0; // Null / Rest
+                } else {
+                    n.state = Math.sign(n.resonance); // Resolves physically to exactly +1 or -1
+                }
+
+                // 3D to 2D Projection (Rotating hyper-structure)
+                let p = rotateY(n.base, timeTick * 0.2);
+                p = rotateX(p, Math.sin(timeTick * 0.1) * 0.5);
+                
+                // Perspective divide
+                let zScale = 800 / (800 + p.z);
+                n.proj.x = cx + p.x * zScale;
+                n.proj.y = cy + p.y * zScale;
+                n.proj.scale = zScale;
+                n.proj.z = p.z;
+            }
+
+            // Depth sorting for basic spatial rendering
+            edges.sort((a,b) => (b.source.proj.z + b.target.proj.z) - (a.source.proj.z + a.target.proj.z));
+            nodes.sort((a,b) => b.proj.z - a.proj.z);
+
+            // 2. Render the vec4 Edges
+            for (let e of edges) {
+                ctx.beginPath();
+                ctx.moveTo(e.source.proj.x, e.source.proj.y);
+                ctx.lineTo(e.target.proj.x, e.target.proj.y);
+                
+                // If the signal is actively passing (+1 excitatory or -1 inhibitory)
+                if (e.source.state === 1 && e.target.state === 1) {
+                    ctx.strokeStyle = `rgba(10, 132, 255, ${0.4 * e.source.proj.scale})`; // Blue Excitatory flow
+                    ctx.lineWidth = 2 * e.source.proj.scale;
+                } else if (e.source.state === -1 && e.target.state === -1) {
+                    ctx.strokeStyle = `rgba(255, 59, 48, ${0.4 * e.source.proj.scale})`; // Red Inhibitory block
+                    ctx.lineWidth = 2 * e.source.proj.scale;
+                } else {
+                    ctx.strokeStyle = `rgba(40, 40, 60, ${0.15 * e.source.proj.scale})`; // Null dark web
+                    ctx.lineWidth = 1;
+                }
+                ctx.stroke();
+            }
+
+            // 3. Render the Int8Array Ternary Nodes
+            for (let n of nodes) {
+                let size = (4 - n.depth * 0.5) * n.proj.scale;
+                if(size < 0.5) continue;
+
+                ctx.beginPath();
+                ctx.arc(n.proj.x, n.proj.y, size, 0, Math.PI * 2);
+
+                if (n.state === 1) {
+                    // Excitatory Trisistor Gate (+1)
+                    ctx.fillStyle = '#0a84ff';
+                    ctx.shadowColor = '#0a84ff';
+                    ctx.shadowBlur = 10 * n.proj.scale;
+                } else if (n.state === -1) {
+                    // Inhibitory Trisistor Gate (-1)
+                    ctx.fillStyle = '#ff3b30';
+                    ctx.shadowColor = '#ff3b30';
+                    ctx.shadowBlur = 10 * n.proj.scale;
+                } else {
+                    // Resting Gate (0)
+                    ctx.fillStyle = '#223';
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        render();
+    </script>
+
+</body>
+</html>
