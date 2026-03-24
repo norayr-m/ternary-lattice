@@ -73,7 +73,7 @@ All visualizations and demonstrations were co-authored with Claude (Anthropic) a
 
 ## Authors
 
-Norayr Matevosyan & A. Petrosyan
+Norayr Matevosyan
 
 ## License
 
