@@ -1,5 +1,7 @@
 # Ternary Simplex Lattice
 
+> This is an amateur engineering project. We are not HPC professionals and make no competitive claims.
+
 **Fractal tetrahedral lattice with ternary (base-3) state logic.**
 
 Proof-of-concept for neuromorphic biological simulation architecture. Ternary nodes on a self-similar tetrahedral topology, projected from 4D through 3D rotation onto a 2D screen.
