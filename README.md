@@ -62,12 +62,12 @@ Open `index.html` in a browser. No dependencies. Single self-contained HTML file
 ## Connection to the Distributed Reconstruction Theorem
 
 ```
-R(f) = Σ φᵢ · Cᵢ(Πᵢ f)    where ‖R(f)‖ > ‖f‖
+R(f) = Σ φᵢ · Cᵢ(Πᵢ f)
 ```
 
-Each node is an observer with a local projection. The ternary state is the compressed boundary measurement. The tetrahedral topology defines the observer graph. The aggregate reconstruction across the lattice exceeds what any single node holds — the >1 result emerging from distributed local transitions.
+Each node is an observer with a local projection. The ternary state is the compressed boundary measurement. The tetrahedral topology defines the observer graph. The honest current claim from the v0.1 draft is conditional. Earlier prose around this demo asserted "$\|R(f)\| > \|f\|$" — that exact norm-growth inequality has been retracted. The current claim is weaker and conditional: under four explicit hypotheses and a bounded computational budget, the aggregate exposes structural features not accessible from the original signal alone within the same budget. This demo is a visual playground for that structure, not a proof of it.
 
-**Paper:** N. Matevosyan, C. Anoian, A. Petrosyan — *Distributed Reconstruction from Incomplete Boundary Projections with Non-Trivial Internal Completion* (2026)
+**Reference:** Distributed Reconstruction work — N. Matevosyan, work in progress.
 
 ---
 
