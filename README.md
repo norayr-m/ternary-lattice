@@ -1,6 +1,6 @@
 # Ternary Simplex Lattice
 
-> This is an amateur engineering project. We are not HPC professionals and make no competitive claims.
+> This is an amateur engineering project. The numbers here come from a single machine and a single family of runs, with no controlled benchmark: reproduce them with the script in this repository rather than taking them on trust.
 
 **Fractal tetrahedral lattice with ternary (base-3) state logic.**
 
